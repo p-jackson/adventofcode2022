@@ -5,7 +5,7 @@ fn main() {
     let file_contents = fs::read_to_string(file_path)
         .expect(format!("Should have been able to read {}", file_path).as_str());
 
-    let mut current_max = 0;
+    let mut current_maxes = vec![];
     let elves = file_contents.split("\n\n");
     for elf in elves {
         let meals = elf
@@ -15,10 +15,14 @@ fn main() {
             .collect::<Result<Vec<_>, ParseIntError>>()
             .expect("Contained invalid integer");
         let total_calories: u32 = meals.iter().sum();
-        if total_calories > current_max {
-            current_max = total_calories;
+
+        if current_maxes.len() < 4 {
+            current_maxes.push(total_calories);
+        } else {
+            current_maxes[0] = total_calories;
+            current_maxes.sort_unstable();
         }
     }
 
-    println!("{}\n", current_max);
+    println!("{}\n", current_maxes.iter().skip(1).sum::<u32>());
 }
