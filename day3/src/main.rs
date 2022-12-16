@@ -1,31 +1,32 @@
 use std::collections::HashSet;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::fs;
 
 fn main() {
     let file_path = "input.txt";
-    let file = File::open(file_path)
-        .expect(format!("Should have been able to read {}", file_path).as_str());
-    let reader = BufReader::new(file);
+    let file_contents = fs::read_to_string(file_path)
+        .unwrap_or_else(|_| panic!("Should have been able to read {}", file_path));
 
-    let total_score = reader
-        .lines()
-        .filter_map(|result| result.ok())
-        .filter_map(get_misplaced_item)
+    let first = file_contents.lines().step_by(3);
+    let second = file_contents.lines().skip(1).step_by(3);
+    let third = file_contents.lines().skip(2).step_by(3);
+
+    let total_score = first
+        .zip(second)
+        .zip(third)
+        .filter_map(|((a, b), c)| get_group_badge(a, b, c))
         .filter_map(get_item_priority)
         .sum::<u32>();
 
     println!("{}", total_score);
 }
 
-fn get_misplaced_item(line: String) -> Option<char> {
-    // This assumes characters are ascii
-    let half = line.len() / 2;
+fn get_group_badge(first: &str, second: &str, third: &str) -> Option<char> {
+    let first = first.chars().collect::<HashSet<_>>();
+    let second = second.chars().collect::<HashSet<_>>();
+    let third = third.chars().collect::<HashSet<_>>();
 
-    let items_in_first_half = line.chars().take(half).collect::<HashSet<_>>();
-    line.chars()
-        .skip(half)
-        .find(|c| items_in_first_half.contains(c))
+    let first_and_second = first.intersection(&second).cloned().collect::<HashSet<_>>();
+    first_and_second.intersection(&third).cloned().next()
 }
 
 fn get_item_priority(item: char) -> Option<u32> {
@@ -41,13 +42,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_missing_item() {
-        assert_eq!(get_misplaced_item("aa".to_string()), Some('a'));
-        assert_eq!(get_misplaced_item("abca".to_string()), Some('a'));
-        assert_eq!(get_misplaced_item("abac".to_string()), Some('a'));
-        assert_eq!(get_misplaced_item("abBa".to_string()), Some('a'));
-        assert_eq!(get_misplaced_item("".to_string()), None);
-        assert_eq!(get_misplaced_item("abcd".to_string()), None);
+    fn test_group_badge() {
+        assert_eq!(get_group_badge("a", "a", "a"), Some('a'));
+        assert_eq!(get_group_badge("a", "a", "b"), None);
+        assert_eq!(get_group_badge("a", "a", "A"), None);
+        assert_eq!(get_group_badge("abcdef", "cat", "a"), Some('a'));
     }
 
     #[test]
