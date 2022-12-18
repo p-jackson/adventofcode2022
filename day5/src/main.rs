@@ -93,11 +93,15 @@ fn parse_move(line: &str) -> Option<Move> {
 fn perform_move(stacks: Stacks, mv: Move) -> Stacks {
     let mut stacks = stacks;
 
+    let keeping = stacks[mv.from].split_off(mv.count);
+
     for _ in 0..mv.count {
-        if let Some(moving) = stacks[mv.from].pop_front() {
+        if let Some(moving) = stacks[mv.from].pop_back() {
             stacks[mv.to].push_front(moving);
         }
     }
+
+    stacks[mv.from] = keeping;
 
     stacks
 }
@@ -232,7 +236,7 @@ mod test {
             stacks,
             vec![
                 VecDeque::from(['C']),
-                VecDeque::from(['B', 'A', 'D', 'E', 'F']),
+                VecDeque::from(['A', 'B', 'D', 'E', 'F']),
                 VecDeque::from(['G', 'H', 'I']),
             ]
         );
@@ -264,7 +268,7 @@ mod test {
             vec![
                 VecDeque::from([]),
                 VecDeque::from(['C', 'M']),
-                VecDeque::from(['Z', 'N', 'D', 'P']),
+                VecDeque::from(['D', 'N', 'Z', 'P']),
             ]
         );
 
@@ -273,9 +277,9 @@ mod test {
         assert_eq!(
             stacks,
             vec![
-                VecDeque::from(['M', 'C']),
+                VecDeque::from(['C', 'M']),
                 VecDeque::from([]),
-                VecDeque::from(['Z', 'N', 'D', 'P']),
+                VecDeque::from(['D', 'N', 'Z', 'P']),
             ]
         );
 
@@ -284,9 +288,9 @@ mod test {
         assert_eq!(
             stacks,
             vec![
-                VecDeque::from(['C']),
                 VecDeque::from(['M']),
-                VecDeque::from(['Z', 'N', 'D', 'P']),
+                VecDeque::from(['C']),
+                VecDeque::from(['D', 'N', 'Z', 'P']),
             ]
         );
     }
